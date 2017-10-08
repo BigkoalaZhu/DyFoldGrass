@@ -41,13 +41,14 @@ class Fold(object):
             return "[%d:%d]%s" % (
                 self.step, self.index, self.op)
 
-    def __init__(self, volatile=False, cuda=False):
+    def __init__(self, volatile=False, cuda=False, variable=True):
         self.steps = collections.defaultdict(
             lambda: collections.defaultdict(list))
         self.cached_nodes = collections.defaultdict(dict)
         self.total_nodes = 0
         self.volatile = volatile
         self._cuda = cuda
+        self._variable = variable
 
     def cuda(self):
         self._cuda = True
@@ -81,12 +82,12 @@ class Fold(object):
                     res.append(x.get(values))
             else:
                 try:
-                    if self._cuda:
+                    if self._variable:
                         #var = Variable(torch.cuda.LongTensor(arg), volatile=self.volatile)
-                        var = Variable(torch.cat(arg,0).cuda(), volatile=self.volatile)
+                        var = torch.cat(arg,0)
                     else:
                         #var = Variable(torch.LongTensor(arg), volatile=self.volatile)
-                        var = torch.cat(arg,0)
+                        var = Variable(torch.cat(arg,0).cuda(), volatile=self.volatile)
                     res.append(var)
                 except:
                     print("Constructing LongTensor from %s" % str(arg))
